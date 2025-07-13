@@ -8,10 +8,10 @@ export const Positions = {
   ADMIN: { text: 'Administrador', value: lit('admin') },
 };
 
-export type Positions = typeof Positions[keyof typeof Positions]['value'];
+export type Positions = (typeof Positions)[keyof typeof Positions]['value'];
 
 export function literalPosition(value: Positions): string {
-  return Positions[value.toUpperCase() as keyof typeof Positions]?.text;
+  return Positions[value?.toUpperCase() as keyof typeof Positions]?.text;
 }
 
 export const enumPositions = Object.entries(Positions).map(

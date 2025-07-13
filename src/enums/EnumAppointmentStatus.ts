@@ -6,11 +6,11 @@ export const AppointmentStatus = {
 };
 
 export type AppointmentStatus =
-  typeof AppointmentStatus[keyof typeof AppointmentStatus]['value'];
+  (typeof AppointmentStatus)[keyof typeof AppointmentStatus]['value'];
 
 export function literalAppointmentStatus(value: AppointmentStatus): string {
   return AppointmentStatus[
-    value.toUpperCase() as keyof typeof AppointmentStatus
+    value?.toUpperCase() as keyof typeof AppointmentStatus
   ]?.text;
 }
 

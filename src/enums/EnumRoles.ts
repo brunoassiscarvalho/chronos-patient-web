@@ -7,10 +7,10 @@ export const Roles = {
   ADMIN: { text: 'Administrador', value: lit('admin') },
 };
 
-export type Roles = typeof Roles[keyof typeof Roles]['value'];
+export type Roles = (typeof Roles)[keyof typeof Roles]['value'];
 
 export function literalRole(value: Roles): string {
-  return Roles[value.toUpperCase() as keyof typeof Roles]?.text;
+  return Roles[value?.toUpperCase() as keyof typeof Roles]?.text;
 }
 
 export const enumRoles = Object.entries(Roles).map(
