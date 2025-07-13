@@ -1,111 +1,74 @@
-import { Grid, Skeleton } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { Box, Stack, Typography } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Video, { Room, Participant } from 'twilio-video';
 import Content from '../../components/organisms/Content';
-import VideoPlayer from '../../components/organisms/VideoPalyer';
+import HttpException from '../../services/HttpException';
 import TeleAttendanceService from './TeleAttendanceService';
+import { urlVideo } from '../../utils/Constants';
+import AppointmentAdvisor from '../appointment/AppointmentAdvisor';
 
-const connectionOptions = (name: string) => {
-  return {
-    video: true,
-    audio: true,
-    name
-  };
-};
-
-export default function TeleAttendance({ service = new TeleAttendanceService() }: any) {
-
-  const videoRef = useRef<any>();
-
-  const [isLoading, setIsloading] = useState<boolean>(true);
-
-  const { appointmentId } = useParams<any>();
-  const [videoToken, setVideoToken] = useState<string>();
-  const [room, setRoom] = useState<Room>();
-  const [participants, setParticipants] = useState<Array<Participant>>();
-
-  const participantConnected = (participant: Participant) => {
-    setParticipants((prevParticipants: Participant[] | undefined) => {
-      if (prevParticipants) {
-        return [...prevParticipants, participant];
-      } else {
-        return [participant];
-      }
-    });
-  };
-
-  const participantDisconnected = async (participant: Participant) => {
-    setParticipants(function (prevParticipants): Participant[] | undefined {
-      if (prevParticipants) {
-        return prevParticipants.filter((p) => p !== participant);
-      }
-    }
-    );
-
-  };
+const TeleAttendance = ({ service = new TeleAttendanceService() }: any) => {
+  const { appointmentId } = useParams<string>();
+  const [appointment, setAppointment] = useState<any>(null);
+  const [error, setError] = useState<HttpException>();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    Video.createLocalVideoTrack().then((res) => {
-      res.attach(videoRef.current);
-    }).catch((err) => {
-      console.log(err);
-    });
-  }, [appointmentId]);
-
-  useEffect(() => {
-    service.getAttendance(appointmentId).then((res: any) => {
-      console.log({ token: res });
-      setVideoToken(res);
-    }).catch((error: any) => {
-      console.log(error);
-    }).finally(() => {
-      setIsloading(false);
-    });
-  }, [appointmentId]);
-
-
-
-  useEffect(() => {
-    if (videoToken)
-      Video.connect(videoToken, connectionOptions('teste')).then((room: Room) => {
-
-        setRoom(room);
-        room.on('participantConnected', participantConnected);
-        room.on('participantDisconnected', participantDisconnected);
-        room.on('disconnected', (room, error) => {
-          if (error) {
-            console.error(error);
-          }
-        });
-        room.participants.forEach(participantConnected);
+    service
+      .getAttendance(appointmentId)
+      .then((res: any) => {
+        setAppointment(res);
+      })
+      .catch((error: HttpException) => {
+        setError(error);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-
-  }, [videoToken]);
-
-
+  }, [appointmentId]);
 
   return (
-    <Content title="Tele atendimento" withoutGoBack>
-      {isLoading ? (
-        <>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Skeleton variant="rectangular" width={600} height={80} />
-            </Grid>
-            <Grid item xs={12}>
-              <Skeleton variant="rectangular" width={600} height={80} />
-            </Grid>
-            <Grid item xs={12}>
-              <Skeleton variant="rectangular" width={600} height={80} />
-            </Grid>
-          </Grid>
-        </>
-      ) : (
-        <video ref={videoRef} />
-        // <VideoPlayer token={videoToken} video={videoTracks} audio={audioTracks} key={identity} />
-
-      )}
+    <Content title="Tele atendimento" isLoading={isLoading} maxWidth={1000}>
+      <Box display="flex" justifyContent="center" width="100%" height="70vh">
+        {appointment && (
+          <Box
+            component="iframe"
+            src={`${urlVideo}/room/${appointment.token}`}
+            width="100%"
+            height="100%"
+            border="none"
+            allow="camera;microphone;display-capture"
+          ></Box>
+        )}
+        {error && (
+          <TeleAttendanceFeedbacks internalCode={error?.internalCode} />
+        )}
+      </Box>
     </Content>
   );
+};
+
+function TeleAttendanceFeedbacks(props: any) {
+  const { internalCode, appointment } = props;
+  switch (internalCode) {
+    case 'CHECK_APPOINTMENT_VIDEO_ANTECIPATION':
+      return (
+        <Stack spacing={3}>
+          <Typography variant="h4"> Você chegou cedo!</Typography>
+          <Typography variant="h6">
+            {' '}
+            Sua consulta sera liberada somente 15 minutos antes do tempo
+            previsto
+          </Typography>
+
+          <AppointmentAdvisor />
+        </Stack>
+      );
+    case 'CHECK_APPOINTMENT_VIDEO_LATE':
+      return <>Sua consulta não esta mais disponível</>;
+    default:
+      return <>Ocorreu algum problema ao abrir sala de consulta </>;
+  }
 }
+
+export default TeleAttendance;

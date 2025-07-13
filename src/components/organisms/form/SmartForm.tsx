@@ -1,60 +1,84 @@
-import { FormControl, Stack } from '@mui/material';
-import React from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import {AnyObjectSchema} from 'yup';
-
+import { Box } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { ptBR } from 'date-fns/locale';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { ReactNode } from 'react';
 
 interface ISmartForm {
-  defaultValues?: any;
-  children: JSX.Element[] | JSX.Element;
-  resolver?: AnyObjectSchema;
-  onSubmit: (data: string) => void;
+  onSubmit: (success: any, error?: any) => void;
+  children: ReactNode;
+  validationSchema?: any;
 }
 
 export default function SmartForm({
-  defaultValues,
-  children,
-  resolver,
   onSubmit,
+  children,
+  validationSchema,
 }: ISmartForm) {
-  const {
-    control,
-    formState: { errors },
-    handleSubmit,
-  } = useForm<any>({
-    ...(resolver && {resolver: yupResolver(resolver)}),
-    criteriaMode: 'all',
-  });
-  console.log({ errors });
+  function submitForm(form: any) {
+    form.preventDefault();
+
+    const formData = Array.from(form.target).reduce<any>(
+      (accFormData: any, formItem: any) => {
+        const { name, value, validations } = formItem;
+        const [arrayName, indexArrayItem, nameArrayField] = name.split('-');
+        if (arrayName && indexArrayItem && nameArrayField) {
+          if (!accFormData[arrayName]) {
+            accFormData[arrayName] = [];
+          }
+          if (!accFormData[arrayName][indexArrayItem]) {
+            accFormData[arrayName][indexArrayItem] = {
+              [nameArrayField]: valueStringToBoolean(value),
+            };
+          }
+          accFormData[arrayName][indexArrayItem][nameArrayField] =
+            valueStringToBoolean(value);
+        } else if (name && value)
+          accFormData[name] = valueStringToBoolean(value);
+
+        return accFormData;
+      },
+      {},
+    );
+
+    try {
+      if (validationSchema)
+        validationSchema.validateSync(formData, { abortEarly: false });
+      onSubmit(formData, null);
+    } catch (err: any) {
+      const newError = err?.inner?.reduce((accError: any, error: any) => {
+        if (error.path.includes('].')) {
+          accError[error.path.split('[').join('-').split('].').join('-')] =
+            error.message;
+        } else {
+          accError[error.path] = error.message;
+        }
+
+        return accError;
+      }, {});
+      onSubmit(null, newError);
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      <Stack spacing={3}>
-        {React.Children.map(children, (child) => {
-          return child.props.name ? (
-            <Controller
-              render={({ field, fieldState }) => (
-                <FormControl>
-                  {React.createElement(child.type, {
-                    ...field,
-                    ...fieldState,
-                    ...child.props,
-                    error: fieldState?.error?.message,
-                  })}
-                </FormControl>
-              )}
-              name={child.props.name}
-              control={control}
-              rules={child.props.validations}
-              defaultValue={
-                defaultValues ? defaultValues[child.props.name] : undefined
-              }
-            />
-          ) : (
-            child
-          );
-        })}
-      </Stack>
-    </form>
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+      <Box
+        component="form"
+        onSubmit={submitForm}
+        sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+        }}
+      >
+        <Box sx={{ width: '100%' }}>{children}</Box>
+      </Box>
+    </LocalizationProvider>
   );
+}
+
+function valueStringToBoolean(value: any): any {
+  if (value === 'false') return false;
+  else if (value === 'true') return true;
+  else return value;
 }

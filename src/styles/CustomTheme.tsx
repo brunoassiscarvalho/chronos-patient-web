@@ -1,5 +1,5 @@
 import { createTheme, Theme } from '@mui/material';
-import { grey, green, lime, indigo } from '@mui/material/colors';
+// import { grey, green, lime, indigo } from '@mui/material/colors';
 import { ptBR } from '@mui/material/locale';
 
 const customTheme: Theme = createTheme(
@@ -8,24 +8,34 @@ const customTheme: Theme = createTheme(
       MuiButton: {
         defaultProps: {
           variant: 'contained',
-        }
-      }
+        },
+      },
+      MuiTextField: {
+        defaultProps: {
+          color: 'secondary',
+        },
+      },
     },
     palette: {
       primary: {
-        main: '#0B2A97',
+        main: '#7FB11F',
+        light: '#C9DEA1',
+        // light: '#C9DEA1',
       },
       secondary: {
-        main: green[800],
+        main: '#195CA3',
       },
       background: {
-        default: grey[300],
+        default: '#F5F5F5',
+
+        // default: '#D8EAB5',
+        // paper: '#D8EAB5',
       },
     },
     typography: {
-      h5: {
-        textAlign: 'center',
-      },
+      // h5: {
+      //   textAlign: 'center',
+      // },
       // fontFamily: [
       //   'Geomanist Regular',
       //   'Geomanist Black',

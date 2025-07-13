@@ -6,21 +6,52 @@ import {
   ListItemText,
   Typography,
   Divider,
-  Skeleton,
-  Grid,
   ButtonBase,
+  Stack,
+  Box,
+  Button,
+  Theme,
+  useMediaQuery,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import Content from '../../components/organisms/Content';
 import { IAppointment } from '../../interfaces/Appointment';
 import AppointmentService from '../appointment/AppointmentService';
 import { useSnackbar } from 'notistack';
-import { formatHoursUTC, formatDateUTC } from '../../utils/Dates';
+import { converteDateBars, formatOnlyHours } from '../../utils/Dates';
 import HttpException from '../../services/HttpException';
 import { useNavigate } from 'react-router-dom';
+import { ReactComponent as ScheduleIcon } from '../../assets/gray_schedule.svg';
+import { literalPosition } from '../../utils/TypeEnums';
+import DialogModal from '../../components/organisms/DialogModal';
+import AppointmentBook from '../appointment/AppointmentBook';
+import AppointmentDetail from '../appointment/AppointmentDetail';
 
 interface ISchedule {
   service?: AppointmentService;
+}
+
+function NoSchedules() {
+  const navigate = useNavigate();
+  return (
+    <Box
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      margin={5}
+      height="100%"
+    >
+      <Stack justifyContent="center" alignItems="center" spacing={5}>
+        <ScheduleIcon width={150} height={150} color="secondary" />
+        <Typography variant="h5" color="secondary">
+          Não existem agendamentos para você
+        </Typography>
+        <Button onClick={() => navigate('/main/consulta')}>
+          Nova Consulta
+        </Button>
+      </Stack>
+    </Box>
+  );
 }
 
 export default function Schedule({
@@ -28,6 +59,10 @@ export default function Schedule({
 }: ISchedule) {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+
+  const isVerySmall: boolean = useMediaQuery((theme: Theme) =>
+    theme.breakpoints.down('sm'),
+  );
 
   const [isLoading, setIsloading] = useState<boolean>(true);
 
@@ -48,39 +83,39 @@ export default function Schedule({
   }, []);
 
   return (
-    <Content title="Agenda" withoutGoBack>
-      {isLoading ? (
-        <>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Skeleton variant="rectangular" width={600} height={80} />
-            </Grid>
-            <Grid item xs={12}>
-              <Skeleton variant="rectangular" width={600} height={80} />
-            </Grid>
-            <Grid item xs={12}>
-              <Skeleton variant="rectangular" width={600} height={80} />
-            </Grid>
-          </Grid>
-        </>
+    <Content
+      title="Agenda"
+      withoutGoBack
+      isLoading={isLoading}
+      loadingListSize={9}
+      maxWidth={500}
+    >
+      {!appointments?.length ? (
+        <NoSchedules />
       ) : (
         <List sx={{ width: '100%', maxWidth: 600 }}>
           {appointments?.map((appointment: IAppointment) => (
             <>
               <ButtonBase
                 key={appointment._id}
-                onClick={() => navigate(`/main/tele-atendimento/${appointment._id}`)}
+                onClick={() =>
+                  navigate(
+                    `/main/tele-atendimento/${appointment._id}/ante-sala`,
+                  )
+                }
                 sx={{ width: '100%', maxWidth: 600 }}
               >
                 <ListItem alignItems="flex-start">
-                  <ListItemAvatar>
-                    <Avatar
-                      alt="Remy Sharp"
-                      src="/static/images/avatar/1.jpg"
-                    />
-                  </ListItemAvatar>
+                  {!isVerySmall && (
+                    <ListItemAvatar>
+                      <Avatar
+                        alt="Remy Sharp"
+                        src="/static/images/avatar/1.jpg"
+                      />
+                    </ListItemAvatar>
+                  )}
                   <ListItemText
-                    primary={formatDateUTC(appointment.start)}
+                    primary={converteDateBars(appointment.start)}
                     secondary={
                       <>
                         <Typography
@@ -89,9 +124,9 @@ export default function Schedule({
                           variant="body2"
                           color="text.primary"
                         >
-                          {`${formatHoursUTC(
+                          {`${formatOnlyHours(
                             appointment.start,
-                          )} - ${formatHoursUTC(appointment.end)}`}
+                          )} - ${formatOnlyHours(appointment.end)}`}
                         </Typography>
                       </>
                     }
@@ -108,7 +143,9 @@ export default function Schedule({
                         >
                           {appointment.professional.name}
                         </Typography>
-                        {` - ${appointment.professional.position}`}
+                        {` - ${literalPosition(
+                          appointment.professional.position,
+                        )}`}
                       </>
                     }
                   />

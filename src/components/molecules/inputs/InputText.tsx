@@ -1,16 +1,7 @@
+import { TextField, useMediaQuery, useTheme } from '@mui/material';
+import { forwardRef, useState } from 'react';
 import { IMaskInput } from 'react-imask';
-import { FormHelperText, FormControl, InputLabel, OutlinedInput } from '@mui/material';
 import { IFormItem } from '../../organisms/form/FormItem';
-import React from 'react';
-
-interface IInputText extends IFormItem {
-  name: string;
-  label: string;
-  format?: any;
-  error?: any;
-  autoComplete?: any;
-  autoFocus?:any
-}
 
 interface CustomProps {
   onChange: (event: { target: { name: string; value: string } }) => void;
@@ -18,27 +9,23 @@ interface CustomProps {
   type: string;
 }
 
-const patternsMask: any = {
-  tel: {
-    mask: '(#0) 00000-0000',
-    definitions: {
-      '#': /[1-9]/,
-    },
-  },
-  cep: {
-    mask: '00000-000',
-  },
+const inputTypes: any = {
+  phone: '(00)00000-0000',
+  cep: '00.000-000',
+  cpf: '000.000.000-00',
 };
 
-const TextMaskCustom = React.forwardRef<HTMLElement, CustomProps>(
-  function TextMaskCustom(props, ref) {
+const TextMaskCustom = forwardRef<HTMLElement, CustomProps>(
+  function TextMaskCustom(props, ref: any) {
     const { onChange, type, ...other } = props;
     return (
       <IMaskInput
         {...other}
-        mask={patternsMask[type].mask}
-        definitions={patternsMask[type].definitions}
-        ref={ref}
+        mask={inputTypes[type]}
+        inputRef={ref}
+        definitions={{
+          '#': /[1-9]/,
+        }}
         onAccept={(value: any) =>
           onChange({ target: { name: props.name, value } })
         }
@@ -48,33 +35,60 @@ const TextMaskCustom = React.forwardRef<HTMLElement, CustomProps>(
   },
 );
 
+interface IInputText extends IFormItem {
+  placeholder?: string;
+  type?: string;
+  validations?: any;
+  format?: string;
+  defaultValue?: any;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  rows?: number;
+  fullWidth?: boolean;
+  readOnly?: boolean;
+}
+
 export default function InputText({
-  validations,
   label,
   error,
+  name,
+  placeholder,
+  type,
+  defaultValue,
+  rows,
+  fullWidth,
+  readOnly,
   format,
-  ...props
 }: IInputText) {
+  const theme = useTheme();
+  const matches = useMediaQuery(theme.breakpoints.up('lg'));
+
+  const errorMessage = error && error[name];
+
+  const [value, setValue] = useState<any>(defaultValue);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(event.target.value);
+  };
   return (
-    <FormControl>
-      <InputLabel
-        required={validations?.required}        
-        style={{backgroundColor:'white'}}
-        error={error}       
-      >
-        {label}
-      </InputLabel>
-      {format && patternsMask[format]? (
-        <OutlinedInput
-          error={error}
-          type={format}
-          {...props}
-          inputComponent={TextMaskCustom as any}
-        />
-      ) : (
-        <OutlinedInput error={error} {...props} />
-      )}
-      {error && <FormHelperText error={error}>{error}</FormHelperText>}
-    </FormControl>
+    <TextField
+      InputProps={{
+        readOnly: readOnly,
+        ...(format && { inputComponent: TextMaskCustom as any }),
+      }}
+      value={value}
+      onChange={handleChange}
+      size={matches ? 'medium' : 'small'}
+      name={name}
+      fullWidth={fullWidth}
+      multiline={!!rows}
+      rows={rows}
+      defaultValue={defaultValue}
+      error={errorMessage}
+      helperText={errorMessage}
+      label={label}
+      type={format || type}
+      placeholder={placeholder}
+    />
   );
 }

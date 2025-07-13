@@ -1,18 +1,16 @@
 import { IProfessional } from './Professional';
 import { IPatientBasicData } from './Patient';
 
-// export interface IAppointmentData {
-
-// }
-// export interface IAppointment<T> {
-//   title: string;
-//   start: Date;
-//   end: Date;
-//   resource: T;
-// }
+export interface IAppointmentEvent {
+  id?: string;
+  title?: string;
+  start: Date;
+  end: Date;
+  extendedProps: IAppointment;
+}
 
 export interface IAppointment {
-  _id?:string;
+  _id?: string;
   title: string;
   start: Date;
   end: Date;

@@ -7,8 +7,6 @@ interface ILoginService {
 
 export default class LoginService extends Service {
   async login(params: ILoginService) {
-    const res = await this.sendRequest('POST', '/login', params);
-    console.log({ res });
-    return res;
+    return this.sendRequest('POST', '/login', params);
   }
 }

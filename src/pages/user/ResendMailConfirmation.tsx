@@ -3,7 +3,7 @@ import { Box, Button, Stack, Typography } from '@mui/material';
 import SmartForm from '../../components/organisms/form/SmartForm';
 import InputText from '../../components/molecules/inputs/InputText';
 import { logoUrl } from '../../utils/Constants';
-import UserService from './UserService';
+import UserService from './PatientService';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 
@@ -18,7 +18,6 @@ export default function ResendMailConfirmation({
   const { enqueueSnackbar } = useSnackbar();
 
   const createNewUser = (newUser: any) => {
-    console.log({ newUser });
     service
       .sendVerificationMail(newUser)
       .then(() => {
@@ -31,29 +30,33 @@ export default function ResendMailConfirmation({
 
   return (
     <Content title="Cadastro">
-      <Stack spacing={5}>
+      <Stack spacing={5} justifyContent="center" alignItems="center">
         <Box component="img" src={logoUrl} />
         {result ? (
-          <>Certo!!!</>
+          <Typography variant="h5">
+            Enviamos o email para confirmação!
+          </Typography>
         ) : (
           <>
             <Typography variant="h5">
               Enviar novamente o email para confirmação
             </Typography>
             <SmartForm onSubmit={createNewUser}>
-              <InputText
-                name="email"
-                type="email"
-                label="Email"
-                validations={{ required: 'Obrigatório' }}
-              />
-              <InputText
-                name="password"
-                type="password"
-                label="Senha"
-                validations={{ required: 'Obrigatório' }}
-              />
-              <Button type="submit">Enviar</Button>
+              <Stack spacing={3}>
+                <InputText
+                  name="email"
+                  type="email"
+                  label="Email"
+                  validations={{ required: 'Obrigatório' }}
+                />
+                <InputText
+                  name="password"
+                  type="password"
+                  label="Senha"
+                  validations={{ required: 'Obrigatório' }}
+                />
+                <Button type="submit">Enviar</Button>
+              </Stack>
             </SmartForm>
           </>
         )}

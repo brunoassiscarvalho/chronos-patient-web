@@ -7,6 +7,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'; // a plugin!
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { Box, Button, ButtonBase, ButtonGroup, Grid } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { IAppointment } from '../../interfaces/Appointment';
 
 interface IFullCalendar {
   events?: any;
@@ -14,10 +15,24 @@ interface IFullCalendar {
   isLoading: boolean;
 }
 
-export default function FullCalendar({ isLoading, events, onSelectEvent }: IFullCalendar) {
+export default function FullCalendar({
+  isLoading,
+  events,
+  onSelectEvent,
+}: IFullCalendar) {
+  const tratedEvents: IAppointment[] | undefined = events?.map((event: any) => {
+    if (event.start && event.end) {
+      return {
+        ...event,
+        title: event.patient ? 'Seu agendamento' : 'Disponível',
+        backgroundColor: event.patient ? 'red' : 'gray',
+        id: event._id,
+      };
+    }
+    return event;
+  });
+
   const calendarRef = React.createRef<any>();
-
-
 
   function goToHoje() {
     const calendarApi = calendarRef.current.getApi();
@@ -80,22 +95,30 @@ export default function FullCalendar({ isLoading, events, onSelectEvent }: IFull
         </Box>
       </Grid>
       <Grid item xs={12}>
-        {isLoading ? <>Loading</> : <ReactFullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin]}
-          initialView="dayGridMonth"
-          headerToolbar={{
-            left: '',
-            center: 'title',
-            right: '',
-          }}
-
-          // eventContent={(event: any) => renderEventContent(event, clickHandler)}
-          allDaySlot={false}
-          initialEvents={events}
-          locale="pt-br"
-          eventClick={clickHandler}
-        />}
+        {isLoading ? (
+          <>Loading</>
+        ) : (
+          <ReactFullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={{
+              left: '',
+              center: 'title',
+              right: '',
+            }}
+            eventTimeFormat={{
+              hour: '2-digit',
+              minute: '2-digit',
+              meridiem: false,
+            }}
+            // eventContent={(event: any) => renderEventContent(event, clickHandler)}
+            allDaySlot={false}
+            initialEvents={tratedEvents}
+            locale="pt-br"
+            eventClick={clickHandler}
+          />
+        )}
       </Grid>
     </Grid>
   );
@@ -106,8 +129,6 @@ function renderEventContent(eventContent: EventContentArg, onClick: any) {
     <ButtonBase onClick={() => onClick(eventContent)}>
       <b>{eventContent.timeText}</b>
       <i>{eventContent.event.title}</i>
-    </ButtonBase >
+    </ButtonBase>
   );
 }
-
-

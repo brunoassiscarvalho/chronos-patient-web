@@ -6,6 +6,7 @@ import {
   IconButton,
   DialogContent,
   DialogActions,
+  Breakpoint,
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { ReactNode } from 'react';
@@ -15,7 +16,7 @@ interface IDialogModal {
   open?: boolean;
   onClose?: (value: any) => void;
   actions?: ReactNode;
-  maxWidth?: string;
+  maxWidth?: Breakpoint;
   children: ReactNode;
 }
 
@@ -26,7 +27,7 @@ export default function DialogModal({
   actions,
   maxWidth = 'xl',
   children,
-}: any) {
+}: IDialogModal) {
   return (
     <Dialog
       aria-labelledby="simple-dialog-title"
